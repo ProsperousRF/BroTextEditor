@@ -6,6 +6,10 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.Scanner;
 
 /**
  * @author Stanislav Rakitov
@@ -18,6 +22,11 @@ public class TextEditor extends JFrame implements ActionListener {
   JLabel fontLabel;
   JButton fontColorButton;
   JComboBox fontBox;
+  JMenuBar menuBar;
+  JMenu fileMenu;
+  JMenuItem openItem;
+  JMenuItem saveItem;
+  JMenuItem exitItem;
 
 
   public TextEditor() throws HeadlessException {
@@ -53,6 +62,25 @@ public class TextEditor extends JFrame implements ActionListener {
     fontBox = new JComboBox(fonts);
     fontBox.addActionListener(this);
     fontBox.setSelectedItem("Arial");
+
+    // Menu bar
+    menuBar = new JMenuBar();
+    fileMenu = new JMenu("File");
+    openItem = new JMenuItem("Open");
+    saveItem = new JMenuItem("Save");
+    exitItem= new JMenuItem("Exit");
+
+    openItem.addActionListener(this);
+    saveItem.addActionListener(this);
+    exitItem.addActionListener(this);
+
+    fileMenu.add(openItem);
+    fileMenu.add(saveItem);
+    fileMenu.add(exitItem);
+    menuBar.add(fileMenu);
+    // Menu bar end
+
+    this.setJMenuBar(menuBar);
     this.add(fontLabel);
     this.add(fontSizeSpinner);
     this.add(fontColorButton);
@@ -68,7 +96,7 @@ public class TextEditor extends JFrame implements ActionListener {
     if (e.getSource() == fontColorButton){
       JColorChooser colorChooser = new JColorChooser();
 
-      Color color = colorChooser.showDialog(null, "Choose a color", Color.BLACK);
+      Color color = JColorChooser.showDialog(null, "Choose a color", Color.BLACK);
       textArea.setForeground(color);
     }
 
@@ -76,5 +104,52 @@ public class TextEditor extends JFrame implements ActionListener {
       textArea.setFont(new Font((String) fontBox.getSelectedItem(), Font.PLAIN,
                                 textArea.getFont().getSize()));
     }
+
+    // Open file menu
+    if (e.getSource() == openItem) {
+      JFileChooser fileChooser = new JFileChooser();
+      fileChooser.setCurrentDirectory(new File("."));
+      int responce = fileChooser.showOpenDialog(null);
+
+      if (responce == JFileChooser.APPROVE_OPTION){
+        File file = new File(fileChooser.getSelectedFile().getAbsolutePath());
+
+        try(Scanner fileIn = new Scanner(file)){
+          if (file.isFile()) {
+            while (fileIn.hasNextLine()){
+              String line = fileIn.nextLine()+"\n";
+              textArea.append(line);
+            }
+          }
+        } catch (FileNotFoundException fileNotFoundException) {
+          fileNotFoundException.printStackTrace();
+        }
+      }
+    }
+
+    // Save menu
+    if (e.getSource() == saveItem) {
+      JFileChooser fileChooser = new JFileChooser();
+      fileChooser.setCurrentDirectory(new File("."));
+      int responce = fileChooser.showSaveDialog(null);
+
+      if (responce == JFileChooser.APPROVE_OPTION) {
+
+        File file = new File(fileChooser.getSelectedFile().getAbsolutePath());
+
+        try(PrintWriter fileOut = new PrintWriter(file)) {
+          fileOut.println(textArea.getText());
+        } catch (FileNotFoundException fileNotFoundException) {
+          fileNotFoundException.printStackTrace();
+        }
+
+      }
+
+
+    }
+    if (e.getSource() == exitItem) {
+      System.exit(0);
+    }
+
   }
 }
